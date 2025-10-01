@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maintenance Mode App</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+body { margin:0; font-family:'Segoe UI',sans-serif; background:#f5f7fb; color:#333; }
+header { 
+  background: linear-gradient(135deg, #4361ee, #3a0ca3);
+  padding:15px; 
+  color:white; 
+  text-align:center; 
+  font-weight:bold; 
+  font-size:20px; 
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  position: relative;
+}
+header .wallet {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: white;
+  color: #4361ee;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.page { display:none; padding:20px; }
+.page.active { display:block; }
+
+.bottom-nav { 
+  position:fixed; 
+  bottom:0; 
+  width:100%; 
+  background:white; 
+  border-top:1px solid #ccc;
+  display:flex; 
+  justify-content:space-around; 
+  padding:10px 0; 
+  box-shadow:0 -2px 10px rgba(0,0,0,0.1);
+  z-index: 5;
+}
+.bottom-nav button { 
+  background:none; 
+  border:none; 
+  font-size:14px; 
+  color:#666; 
+  cursor:pointer; 
+  transition:0.3s; 
+  padding: 8px 15px;
+  border-radius: 20px;
+}
+.bottom-nav button.active { 
+  color:#4361ee; 
+  font-weight:bold; 
+  background: rgba(67, 97, 238, 0.1);
+}
+
+/* Maintenance Card */
+#maintenanceCard {
+  display:none;
+  background: #fff;
+  border: 3px solid hotpink;
+  box-shadow: 0 0 20px rgba(255,20,147,0.6);
+  border-radius: 16px;
+  padding: 30px;
+  text-align: center;
+  margin: 50px auto;
+  max-width: 400px;
+}
+#maintenanceCard .gear { 
+  font-size: 60px; 
+  color: #4361ee;
+  animation: spin 3s linear infinite; 
+  margin-bottom: 20px;
+}
+#maintenanceCard h2 {
+  margin: 10px 0;
+  color: #e63946;
+}
+#maintenanceCard #countdownTimer {
+  font-size: 22px;
+  font-weight: bold;
+  margin: 15px 0;
+  font-family: monospace;
+  color: #3a0ca3;
+}
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+/* Content cards */
+.content-card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+  position: relative;
+}
+.content-card h3 { margin-top:0; color:#4361ee; }
+.task-item {
+  padding: 12px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+}
+/* Admin Icon */
+.admin-icon {
+  position: absolute;
+  top: 12px;
+  right: 12px; /* move from left to right */
+  font-size: 22px;
+  color: #ff4081;
+  cursor: pointer;
+}
+
+/* Admin Panel */
+#adminPanel {
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  padding: 25px;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  z-index: 100;
+  width: 85%;
+  max-width: 400px;
+  border: 2px solid #4361ee;
+  cursor: move;
+}
+#adminPanel h3 { margin-top:0; color:#4361ee; text-align:center; }
+#adminPanel textarea { width:100%; padding:10px; border-radius:8px; border:1px solid #ccc; resize:vertical; min-height:60px; margin-bottom:10px; }
+#adminPanel .btn { padding:10px 15px; border:none; border-radius:8px; cursor:pointer; margin:5px; color:#fff; }
+.btn-primary { background: #4361ee; }
+.btn-danger { background: #e63946; }
+.close-btn { position:absolute; top:10px; right:15px; background:none; border:none; font-size:22px; cursor:pointer; color:#666; }
+.close-btn:hover { color:#e63946; }
+</style>
+</head>
+<body>
+
+<header>
+  My App
+  <div class="wallet" id="walletBox">
+    <i class="fas fa-wallet"></i> ₹500
+  </div>
+</header>
+
+<!-- Pages -->
+<div id="home" class="page active">
+  <!-- Maintenance Card -->
+  <div id="maintenanceCard">
+    <i class="fas fa-cog gear"></i>
+    <h2>Maintenance Mode</h2>
+    <p id="overlayMessage">We're upgrading the app. Please wait!</p>
+    <div id="countdownTimer">00:00:00</div>
+  </div>
+
+  <!-- Home Content -->
+  <div id="homeContent">
+    <div class="content-card">
+      <h2>🏠 Home</h2>
+      <p>Welcome to the app! Earn rewards by completing tasks.</p>
+    </div>
+    <div class="content-card">
+      <h3>🔥 Available Tasks</h3>
+      <div class="task-item">
+        <span>Watch a Video</span> <button>Earn ₹10</button>
+      </div>
+      <div class="task-item">
+        <span>Complete Survey</span> <button>Earn ₹25</button>
+      </div>
+      <div class="task-item">
+        <span>Download App</span> <button>Earn ₹15</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="profile" class="page">
+  <div class="content-card">
+    <i class="fas fa-user-shield admin-icon" onclick="adminLogin()"></i>
+    <h2>👤 Profile</h2>
+    <p>Your user profile info goes here.</p>
+  </div>
+</div>
+
+<!-- Floating Admin Panel -->
+<div id="adminPanel">
+  <button class="close-btn" onclick="adminPanel.style.display='none'">&times;</button>
+  <h3>Admin Panel</h3>
+  <label>Maintenance Message:</label>
+  <textarea id="maintenanceMessage">We're upgrading the app. Please wait!</textarea>
+  <div style="text-align:center;">
+    <button class="btn btn-primary" onclick="startMaintenanceFromPanel()">Start Maintenance</button>
+    <button class="btn btn-danger" onclick="stopMaintenance()">Stop Maintenance</button>
+  </div>
+  <div style="margin-top:10px; text-align:center;">
+    <button class="btn btn-primary" onclick="setMaintenanceDuration(5)">5 min</button>
+    <button class="btn btn-primary" onclick="setMaintenanceDuration(15)">15 min</button>
+    <button class="btn btn-primary" onclick="setMaintenanceDuration(30)">30 min</button>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<div class="bottom-nav">
+  <button onclick="showPage('home')" class="active"><i class="fas fa-home"></i> Home</button>
+  <button onclick="showPage('profile')"><i class="fas fa-user"></i> Profile</button>
+</div>
+
+<script>
+let isMaintenanceMode = false;
+let maintenanceEndTime = null;
+let countdownInterval = null;
+
+const homeContent = document.getElementById("homeContent");
+const maintenanceCard = document.getElementById("maintenanceCard");
+const countdownTimer = document.getElementById("countdownTimer");
+const walletBox = document.getElementById("walletBox");
+const adminPanel = document.getElementById("adminPanel");
+const maintenanceMessageBox = document.getElementById("maintenanceMessage");
+const overlayMessage = document.getElementById("overlayMessage");
+
+function showPage(pageId){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+}
+
+// Admin Login
+function adminLogin(){
+  const pwd = prompt("Enter admin password:");
+  if(pwd === "admin123"){
+    adminPanel.style.display='block';
+  } else {
+    alert("Wrong password!");
+  }
+}
+
+// UI update
+function updateUI(){
+  overlayMessage.textContent = maintenanceMessageBox.value;
+  if(isMaintenanceMode){
+    homeContent.style.display = "none";
+    maintenanceCard.style.display = "block";
+    walletBox.style.display = "none";
+  } else {
+    homeContent.style.display = "block";
+    maintenanceCard.style.display = "none";
+    walletBox.style.display= "flex";
+  }
+}
+
+// Start maintenance from admin panel
+function startMaintenanceFromPanel(){
+  setMaintenanceDuration(10); // Default 10 minutes
+}
+
+// Start maintenance
+function setMaintenanceDuration(minutes){
+  isMaintenanceMode = true;
+  maintenanceEndTime = new Date().getTime() + minutes*60*1000;
+  updateUI();
+  startCountdown();
+}
+
+// Stop maintenance
+function stopMaintenance(){
+  isMaintenanceMode = false;
+  maintenanceEndTime = null;
+  updateUI();
+  stopCountdown();
+}
+
+// Countdown logic
+function startCountdown(){
+  if(countdownInterval) clearInterval(countdownInterval);
+  updateCountdownDisplay();
+  countdownInterval = setInterval(updateCountdownDisplay,1000);
+}
+
+function updateCountdownDisplay(){
+  if(!maintenanceEndTime) return;
+  const now = new Date().getTime();
+  const distance = maintenanceEndTime - now;
+  if(distance <= 0){
+    stopMaintenance();
+    return;
+  }
+  const h = String(Math.floor(distance/(1000*60*60))).padStart(2,"0");
+  const m = String(Math.floor((distance%(1000*60*60))/(1000*60))).padStart(2,"0");
+  const s = String(Math.floor((distance%(1000*60))/1000)).padStart(2,"0");
+  countdownTimer.textContent = `${h}:${m}:${s}`;
+}
+
+function stopCountdown(){
+  if(countdownInterval) clearInterval(countdownInterval);
+  countdownTimer.textContent = "00:00:00";
+}
+
+// Initialize UI
+updateUI();
+
+// Optional: draggable admin panel
+let isDragging = false, offsetX, offsetY;
+adminPanel.addEventListener('mousedown', function(e){
+  isDragging = true;
+  offsetX = e.clientX - adminPanel.offsetLeft;
+  offsetY = e.clientY - adminPanel.offsetTop;
+});
+window.addEventListener('mousemove', function(e){
+  if(isDragging){
+    adminPanel.style.left = (e.clientX - offsetX) + 'px';
+    adminPanel.style.top = (e.clientY - offsetY) + 'px';
+  }
+});
+window.addEventListener('mouseup', function(){
+  isDragging = false;
+});
+</script>
+</body>
+</html>
